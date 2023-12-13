@@ -43,7 +43,7 @@ done
 
 ## ocm requires a latest release idenfity, otherwise curl won't download a frickin' anything
 
-OCM_VERSION=$(curl https://github.com/openshift-online/ocm-cli/releases/latest -L|grep -Eo Release\ [0-9].[0-9].[0-9]{2}|sed 's/<[^>]*>//g;s/Release\ /v/g'|uniq)
+OCM_VERSION=$(curl -s https://github.com/openshift-online/ocm-cli/releases/latest -L|grep -Eo Release\ [0-9].[0-9].[0-9]{2}|sed 's/<[^>]*>//g;s/Release\ /v/g'|uniq)
 
 
 # Client Array section
@@ -51,7 +51,6 @@ OCM_VERSION=$(curl https://github.com/openshift-online/ocm-cli/releases/latest -
 declare -A CLIENT_URLS_ARRAY
 CLIENT_URLS_ARRAY[oc]="https://mirror.openshift.com/pub/openshift-v4/${ARCH}/clients/ocp/stable/openshift-client-${KERNEL}.tar.gz"
 CLIENT_URLS_ARRAY[ocm]="https://github.com/openshift-online/ocm-cli/releases/download/${OCM_VERSION}/ocm-${KERNEL}-amd64"
-#CLIENT_URLS_ARRAY[tkn]="https://mirror.openshift.com/pub/openshift-v4/clients/pipelines/latest/${ARCH}/${KERNEL}/tkn-${KERNEL}-amd64.tar.gz"
 CLIENT_URLS_ARRAY[tkn]="https://mirror.openshift.com/pub/openshift-v4/clients/pipelines/latest/tkn-${KERNEL}-amd64.tar.gz"
 CLIENT_URLS_ARRAY[kn]="https://mirror.openshift.com/pub/openshift-v4/clients/serverless/latest/kn-${KERNEL}-amd64.tar.gz"
 CLIENT_URLS_ARRAY[rosa]="https://mirror.openshift.com/pub/openshift-v4/clients/rosa/latest/rosa-${KERNEL}.tar.gz"
