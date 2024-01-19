@@ -7,7 +7,6 @@
 # 2022/05/05
 
 # OS Type definition
-
 :; if [ -z 0 ]; then
   @echo off
   goto :WINDOWS
@@ -78,6 +77,7 @@ print_help () {
    echo "-h/--help      Print this Help."
    echo "-d/--debug	Enables set -x, for debug"
    echo "-c $client Updates client at your choice between [rosa|ocm|tkn|kn|helm|oc|az|all]."
+   echo "-l/--log	Enables logging so you can check all the details after installation"
    echo
 }
 
@@ -164,7 +164,7 @@ linux_client_check_n_update () {
                         [[ "$CLIENT_FILENAME" == \.gz$ && "$client" != "az" && "$client" != "aws" && -w "${CLIENT_CHECK}" ]] && echo "Now unTar-ing $client client into $CLIENT_LOC" && $SUDO tar xvzf ${TMPDIR}/${CLIENT_FILENAME} -C $CLIENT_LOC --overwrite && echo "$client client installed/updated in $CLIENT_LOC"
                                 fi
                 fi
-
+		$LOGENABLED
 }
 
      
@@ -180,6 +180,9 @@ for param in "$@"
 			then print_help; exit 2
 		elif [ "$param" == "--debug" ] || [ "$param" == "-d" ];
 			then set -x;
+		elif [ "$param" == "--log" ] || [ "$param" == "-l" ];
+			export LOGFILE="/tmp/cloud-updater_$(date +%Y.%m.%d-%H.%M.%S).log"
+			then export LOGENABLED="2>&1| tee -a ${LOGFILE}"
 		fi
 done
 
@@ -195,7 +198,7 @@ done
 print_sudo_disclaimer
 
 # ALL IN!
-
+#touch ${LOGFILE} 
 if [ "$client" == "all" ];
 	then declare -a CLIENT_ARRAY=(oc ocm tkn kn helm rosa aws az)
 else CLIENT_ARRAY=$client # this makes it working in Singular client update
@@ -212,10 +215,9 @@ for client in "${CLIENT_ARRAY[@]}"
      	then read -p "Please input one of the following [rosa|ocm|tkn|kn|helm|oc|az]: " client	
      fi
 
-     ${ostype}_client_check_n_update
+     ${ostype}_client_check_n_update 
      # Clean up function call
      clean_up
 done
 exit
-
 :WINDOWS
