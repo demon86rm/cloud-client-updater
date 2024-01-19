@@ -1,10 +1,38 @@
-#!/usr/bin/env bash  
+#!/usr/bin/env bash
+######################################################################################################################
+##  +-----------------------------------+-----------------------------------+
+##  |                                                                       |
+##  | Copyright (c) 2023-2024, Gianfranco Mollo <gmollo@redhat.com>.        |
+##  |                                                                       |
+##  | This program is free software: you can redistribute it and/or modify  |
+##  | it under the terms of the GNU General Public License as published by  |
+##  | the Free Software Foundation, either version 3 of the License, or     |
+##  | (at your option) any later version.                                   |
+##  |                                                                       |
+##  | This program is distributed in the hope that it will be useful,       |
+##  | but WITHOUT ANY WARRANTY; without even the implied warranty of        |
+##  | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         |
+##  | GNU General Public License for more details.                          |
+##  |                                                                       |
+##  | You should have received a copy of the GNU General Public License     |
+##  | along with this program. If not, see <http://www.gnu.org/licenses/>.  |
+##  |                                                                       |
+#   |  About the author:                                                    |
+#   |                                                                       |
+#   |  Owner:   Marco Placidi                                               |
+#   |  GitHub:  https://github.com/demon86rm/cloud-client-updater           |
+##  |                                                                       |
+##  +-----------------------------------------------------------------------+
+##
+######################################################################################################################
+##
+##  DESCRIPTION
 #
-# Automatic updater for any client related to both self-provisioned Openshift and Managed Openshift environments
+#   This script is intended to be a single-point-of-contact like to manage all the binaries needed to manage your cloud environments with one tool.
+#   The main supported operating system is Linux, however there's a WIP for supporting MacOS and Windows though.
+#   The actual roster of client binaries that can be installed/updated with this tool, is made of: rosa, ocm, tkn, kn, helm, oc, az, aws. 
 #
-# By Marco Placidi mplacidi@redhat.com
-#
-# 2022/05/05
+########################################################################################################################
 
 # OS Type definition
 :; if [ -z 0 ]; then
@@ -156,7 +184,7 @@ linux_client_check_n_update () {
                                         fi
                 elif [[ "$client" == "aws" ]];
                         then curl -s "https://awscli.amazonaws.com/awscli-exe-${KERNEL}-${ARCH}.zip" -o "${TMPDIR}/awscliv2.zip" && unzip -qq -o ${TMPDIR}/awscliv2.zip -d ${TMPDIR}
-                        [ -z $(which aws) ] && sudo ${TMPDIR}/aws/install || sudo ${TMPDIR}/aws/install --update
+                        [ -z "$(which aws)" ] && sudo ${TMPDIR}/aws/install || sudo ${TMPDIR}/aws/install --update
                 elif [[ "${client}" == "ocm" ]];
                         then cp ${TMPDIR}/$CLIENT_FILENAME $CLIENT_LOC/$client
                 else
@@ -164,12 +192,15 @@ linux_client_check_n_update () {
                         [[ "$CLIENT_FILENAME" == \.gz$ && "$client" != "az" && "$client" != "aws" && -w "${CLIENT_CHECK}" ]] && echo "Now unTar-ing $client client into $CLIENT_LOC" && $SUDO tar xvzf ${TMPDIR}/${CLIENT_FILENAME} -C $CLIENT_LOC --overwrite && echo "$client client installed/updated in $CLIENT_LOC"
                                 fi
                 fi
-		$LOGENABLED
-}
+		}
 
      
 macos_client_check_n_update () {
 echo NOT YET
+}
+
+linux_status_client () {
+
 }
 
 
@@ -181,13 +212,15 @@ for param in "$@"
 		elif [ "$param" == "--debug" ] || [ "$param" == "-d" ];
 			then set -x;
 		elif [ "$param" == "--log" ] || [ "$param" == "-l" ];
-			export LOGFILE="/tmp/cloud-updater_$(date +%Y.%m.%d-%H.%M.%S).log"
-			then export LOGENABLED="2>&1| tee -a ${LOGFILE}"
+			then export LOGFILE="/tmp/cloud-updater_$(date +%Y.%m.%d-%H.%M.%S).log"
+			exec > >(tee -a ${LOGFILE}) 2>&1
+		elif [ "$param" == "--status" ] || [ "$param" == "-s" ];
+			then echo ${ostype}_status_client;exit 2
 		fi
 done
 
 # Client choice
-while getopts c: option
+while getopts "cs:dlh" option
 do
 	case "${option}"
 		in
@@ -198,10 +231,9 @@ done
 print_sudo_disclaimer
 
 # ALL IN!
-#touch ${LOGFILE} 
 if [ "$client" == "all" ];
 	then declare -a CLIENT_ARRAY=(oc ocm tkn kn helm rosa aws az)
-else CLIENT_ARRAY=$client # this makes it working in Singular client update
+	else CLIENT_ARRAY=${client} #this makes it working in Singular client update
 	declare -a CLIENT_VALUES=(oc ocm tkn kn helm rosa aws az)
 	declare -A KEY
 	for key in "${!CLIENT_VALUES[@]}"; do KEY[${CLIENT_VALUES[$key]}]="$key";done
@@ -212,10 +244,10 @@ for client in "${CLIENT_ARRAY[@]}"
   do
      # Singular client update
      if [ -z "$client" ]
-     	then read -p "Please input one of the following [rosa|ocm|tkn|kn|helm|oc|az]: " client	
+     	then read -r -p "Please input one of the following [rosa|ocm|tkn|kn|helm|oc|az]: " client	
      fi
 
-     ${ostype}_client_check_n_update 
+     ${ostype}_client_check_n_update
      # Clean up function call
      clean_up
 done
